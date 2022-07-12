@@ -32,8 +32,6 @@ from time import *
 
 credentialsLocation = 'creds.json'
 fontPath = 'fonts/ubmr.ttf'
-targetedDevice = 'headb'
-devicePassword = '12345'
 # deviceSize is in inches, can be 4.2 or 2.7
 deviceSize = 4.2
 
@@ -48,22 +46,26 @@ class TimetableServer(tcp_sver.tcp_sver):
 
             print("Device connecting of ID:", deviceID)
 
-            if (deviceID != targetedDevice):
-                print("Device is not owned by me, ignoring")
-                return
-
-            # If device is locked, assume the password is 12345
-            self.unlock(devicePassword)
-            # Setup the device with a certain size screen.
-            epd = waveshare_epd.EPD(deviceSize)
-            self.set_size(epd.width, epd.height)
-
             credsFile = open(credentialsLocation)
             credsJSON = json.load(credsFile)
             credentials = login(credsJSON['url'] + 'auth/login',
                                 credsJSON['user'], credsJSON['pass'])
             arborURL = credsJSON['url']
+            targetedDevice = credsJSON['device_id']
+            devicePassword = credsJSON['device_password']
             credsFile.close()
+
+            if (deviceID != targetedDevice):
+                print("Device is not owned by me, ignoring")
+                return
+
+            # If device is locked, assume the password is as the user set
+            self.unlock(devicePassword)
+
+            # Setup the device with a certain size screen.
+            epd = waveshare_epd.EPD(deviceSize)
+            self.set_size(epd.width, epd.height)
+
             headers = get_headers(credentials)
 
             weekNumber = get_week(headers, arborURL)
