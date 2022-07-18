@@ -30,18 +30,21 @@
 
 import logging
 from PIL import Image
+
+
 class EPD:
-    def __init__(self,size):
-        if size == 4.2 :
+    def __init__(self, size):
+        if size == 4.2:
             self.width = 400
             self.height = 300
         elif size == 2.13:
             self.width = 128
             self.height = 250
-        else :
+        else:
             exit()
+
     def getbuffer(self, image):
-        buf = [0xFF] * (int(self.width/8) * self.height)
+        buf = [0xFF] * (int(self.width / 8) * self.height)
         image_monocolor = image.convert('1')
         imwidth, imheight = image_monocolor.size
         pixels = image_monocolor.load()
@@ -50,14 +53,15 @@ class EPD:
                 for x in range(imwidth):
                     # Set the bits for the column of pixels at the current position.
                     if pixels[x, y] == 0:
-                        buf[int((x + y * self.width) / 8)] &= ~(0x80 >> (x % 8))
+                        buf[int((x + y * self.width) / 8)
+                            ] &= ~(0x80 >> (x % 8))
         elif(imwidth == self.height and imheight == self.width):
             for y in range(imheight):
                 for x in range(imwidth):
                     newx = y
                     newy = self.height - x - 1
                     if pixels[x, y] == 0:
-                        buf[int((newx + newy*self.width) / 8)] &= ~(0x80 >> (y % 8))
-        return buf 
+                        buf[int((newx + newy * self.width) / 8)
+                            ] &= ~(0x80 >> (y % 8))
+        return buf
 ### END OF FILE ###
-

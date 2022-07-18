@@ -45,214 +45,223 @@ import fcntl
 import time
 import math
 
-pbar_cnt =0
+pbar_cnt = 0
 trange.pos = 0
 
-def progresser(n,id,date):
-  time.sleep(0.1)
-  total = 100
-  n_desc="{0}".format(id)
-  trange.pos = 0  
-  bar=trange(total,desc=n_desc,position=n)
-  bar.update(date)
-  if date==total:
-    bar.close()
-   
+
+def progresser(n, id, date):
+    time.sleep(0.1)
+    total = 100
+    n_desc = "{0}".format(id)
+    trange.pos = 0
+    bar = trange(total, desc=n_desc, position=n)
+    bar.update(date)
+    if date == total:
+        bar.close()
+
+
 def get_host_ip():
     try:
-        s=socket.socket(socket.AF_INET,socket.SOCK_DGRAM)
-        s.connect(('8.8.8.8',80))
-        ip=s.getsockname()[0]
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.connect(('8.8.8.8', 80))
+        ip = s.getsockname()[0]
     finally:
         s.close()
     return ip
 
+
 class tcp_sver(socketserver.BaseRequestHandler):
-    
-    ID='nuknow'
-    client=None
-    size=0
-    width=0
-    hight=0
-    b_width=0
-    lenght=1024
-    history_file_name ="History.txt"
-    
-    def set_size(self,w,h):
-        self.width=w
-        self.hight=h
-        self.b_width=math.ceil(w/8)
-        self.size=self.b_width*h
-        
-    def Wait_write(self,msg):
+
+    ID = 'nuknow'
+    client = None
+    size = 0
+    width = 0
+    hight = 0
+    b_width = 0
+    lenght = 1024
+    history_file_name = "History.txt"
+
+    def set_size(self, w, h):
+        self.width = w
+        self.hight = h
+        self.b_width = math.ceil(w / 8)
+        self.size = self.b_width * h
+
+    def Wait_write(self, msg):
         with open(self.history_file_name, 'a') as f:
             fcntl.flock(f.fileno(), fcntl.LOCK_EX)
-            now_time=time.strftime('%Y-%m-%d %H:%M:%S')
-            f.write("time:{0}\tID:{1}\tIP:{2}\tPROT:{3}\t{4}\r\n".format(now_time,self.ID,self.client_address[0],self.client_address[1],msg))
-            logging.debug("time:{0}\tID:{1}\tIP:{2}\tPROT:{3}\t{4}\r\n".format(now_time,self.ID,self.client_address[0],self.client_address[1],msg))
+            now_time = time.strftime('%Y-%m-%d %H:%M:%S')
+            f.write("time:{0}\tID:{1}\tIP:{2}\tPROT:{3}\t{4}\r\n".format(
+                now_time, self.ID, self.client_address[0], self.client_address[1], msg))
+            logging.debug("time:{0}\tID:{1}\tIP:{2}\tPROT:{3}\t{4}\r\n".format(
+                now_time, self.ID, self.client_address[0], self.client_address[1], msg))
             fcntl.flock(f.fileno(), fcntl.LOCK_UN)
-            f.close()   
+            f.close()
+
     def Get_msg(self):
-        msg=b''
-        temp=''
-        while temp!=b'$':
-            temp=self.client.recv(1)
+        msg = b''
+        temp = ''
+        while temp != b'$':
+            temp = self.client.recv(1)
             time.sleep(0.001)
         temp = self.client.recv(1)
-        if temp!=b'$':
-            msg=msg+temp
+        if temp != b'$':
+            msg = msg + temp
         while True:
-        
+
             temp = self.client.recv(1)
-            if temp==b'#':
+            if temp == b'#':
                 break
-            msg=msg+temp
+            msg = msg + temp
         if msg == b'':
-            msg =b'$'
+            msg = b'$'
         return msg
 
-    def check_get(self,check=b'1'):
-        msg=self.Get_msg();
-        if(msg==check):
+    def check_get(self, check=b'1'):
+        msg = self.Get_msg()
+        if(msg == check):
             return True
-        else :
-            print('get: {0} check:{1}'.format(msg,check))
-            return False           
+        else:
+            print('get: {0} check:{1}'.format(msg, check))
+            return False
 
-    def safe_send(self,send_msg,check):
+    def safe_send(self, send_msg, check):
         while True:
             self.client.sendall(send_msg)
-            if(self.check_get(check)==True):
+            if(self.check_get(check) == True):
                 break
             time.sleep(1)
-             
-    def Send_cmd(self,cmd): 
-        check=0
-        cmd=cmd.encode()
-        
-        for i in range(0,len(cmd)):
-            check=check^cmd[i]
-        check=struct.pack(">B",check)
-        cmd=b';'+cmd+b'/'+check
 
-        self.safe_send(cmd,check)
-         
-    def Send_data(self,data):
-        check=0
-        for i in range(0,len(data)):
-            check=check^data[i]
+    def Send_cmd(self, cmd):
+        check = 0
+        cmd = cmd.encode()
 
-        data=[0x57]+data+[check]
-        data=struct.pack(">%dB"%(len(data)),*data) 
-        check=struct.pack(">B",check)  
-        self.safe_send(data,check)
-        
-    def Get_ID(self):   
+        for i in range(0, len(cmd)):
+            check = check ^ cmd[i]
+        check = struct.pack(">B", check)
+        cmd = b';' + cmd + b'/' + check
+
+        self.safe_send(cmd, check)
+
+    def Send_data(self, data):
+        check = 0
+        for i in range(0, len(data)):
+            check = check ^ data[i]
+
+        data = [0x57] + data + [check]
+        data = struct.pack(">%dB" % (len(data)), *data)
+        check = struct.pack(">B", check)
+        self.safe_send(data, check)
+
+    def Get_ID(self):
         self.Send_cmd('G')
-        self.ID=self.Get_msg().decode()
+        self.ID = self.Get_msg().decode()
         self.Wait_write("connect.")
-        return self.ID 
-        
-    def unlock(self,password):
+        return self.ID
+
+    def unlock(self, password):
         self.Send_cmd('C')
-        if (self.Get_msg()==b'1'):
+        if (self.Get_msg() == b'1'):
             logging.debug("lock")
-            self.Send_cmd('N'+password)
-            if (self.Get_msg()==b'1'):
+            self.Send_cmd('N' + password)
+            if (self.Get_msg() == b'1'):
                 logging.debug("unlock")
         else:
             logging.debug("unlock")
+
     def check_batter(self):
-        self.Send_cmd('b') 
-        return (int(self.Get_msg())*3)
+        self.Send_cmd('b')
+        return (int(self.Get_msg()) * 3)
+
     def clear(self):
-        
-        id="id:{0} batter:{1}".format(self.ID,self.check_batter())
+
+        id = "id:{0} batter:{1}".format(self.ID, self.check_batter())
         self.Send_cmd('F')
         global pbar_cnt
-        cnnt =20
-        if(pbar_cnt<cnnt):
-            pbar_cnt=pbar_cnt+1
-        else :
-            pbar_cnt=1
+        cnnt = 20
+        if(pbar_cnt < cnnt):
+            pbar_cnt = pbar_cnt + 1
+        else:
+            pbar_cnt = 1
             os.system("clear")
-        pbar_cnt_loct=pbar_cnt
-        progresser(pbar_cnt_loct,id,0) 
-        
-        for i in range(0,math.ceil(self.size/self.lenght)):
-            leng=self.lenght
-            addr=i*leng         
-            num=(addr%4096)//leng
-            data=struct.pack(">IIB",addr,leng,num)
-            data=struct.unpack(">9B",data)
-            data=list(data)
-            for j in range(0,leng):
-                data=data+[0xff]
+        pbar_cnt_loct = pbar_cnt
+        progresser(pbar_cnt_loct, id, 0)
+
+        for i in range(0, math.ceil(self.size / self.lenght)):
+            leng = self.lenght
+            addr = i * leng
+            num = (addr % 4096) // leng
+            data = struct.pack(">IIB", addr, leng, num)
+            data = struct.unpack(">9B", data)
+            data = list(data)
+            for j in range(0, leng):
+                data = data + [0xff]
             self.Send_data(data)
-            pbar_num=int((i/math.ceil(self.size/self.lenght))*100)
-            progresser(pbar_cnt_loct,id,pbar_num)
-        data=[0,0,0,0,0,0,0,0,0,0,0]
+            pbar_num = int((i / math.ceil(self.size / self.lenght)) * 100)
+            progresser(pbar_cnt_loct, id, pbar_num)
+        data = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
         self.Send_data(data)
         self.Send_cmd('D')
-        progresser(pbar_cnt_loct,id,100)
-    def flush_buffer(self,DATA):
-        id="id:{0} batter:{1}".format(self.ID,self.check_batter())
+        progresser(pbar_cnt_loct, id, 100)
+
+    def flush_buffer(self, DATA):
+        id = "id:{0} batter:{1}".format(self.ID, self.check_batter())
         time.sleep(0.1)
         self.Send_cmd('F')
         global pbar_cnt
-        cnnt =20
-        if(pbar_cnt<cnnt):
-            pbar_cnt=pbar_cnt+1
-        else :
-            pbar_cnt=1
+        cnnt = 20
+        if(pbar_cnt < cnnt):
+            pbar_cnt = pbar_cnt + 1
+        else:
+            pbar_cnt = 1
             os.system("clear")
-        pbar_cnt_loct=pbar_cnt
-        progresser(pbar_cnt_loct,id,0) 
-        for i in range(0,math.ceil(self.size/self.lenght)):
-            leng=self.lenght
-            addr=i*leng         
-            num=(addr%4096)//leng
-            data=struct.pack(">IIB",addr,leng,num)
-            data=struct.unpack(">9B",data)
-            data=list(data)
-            for j in range(0,leng):
-                if (i*leng+j)<len(DATA):
-                    data=data+[DATA[j+i*leng]]
+        pbar_cnt_loct = pbar_cnt
+        progresser(pbar_cnt_loct, id, 0)
+        for i in range(0, math.ceil(self.size / self.lenght)):
+            leng = self.lenght
+            addr = i * leng
+            num = (addr % 4096) // leng
+            data = struct.pack(">IIB", addr, leng, num)
+            data = struct.unpack(">9B", data)
+            data = list(data)
+            for j in range(0, leng):
+                if (i * leng + j) < len(DATA):
+                    data = data + [DATA[j + i * leng]]
                 else:
-                    data=data+[0xFF]
-            
-            pbar_num=int((i/math.ceil(self.size/self.lenght))*100)
-            progresser(pbar_cnt_loct,id,pbar_num)
-            self.Send_data(data)            
-        data=[0,0,0,0,0,0,0,0,0,0,0]
-        self.Send_data(data)
-        self.Send_cmd('D') 
-        self.Wait_write("Display over.")
-        progresser(pbar_cnt_loct,id,100)
+                    data = data + [0xFF]
 
-        
-    def ota(self,ota_path):      
+            pbar_num = int((i / math.ceil(self.size / self.lenght)) * 100)
+            progresser(pbar_cnt_loct, id, pbar_num)
+            self.Send_data(data)
+        data = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+        self.Send_data(data)
+        self.Send_cmd('D')
+        self.Wait_write("Display over.")
+        progresser(pbar_cnt_loct, id, 100)
+
+    def ota(self, ota_path):
         self.Send_cmd('O')
         fsize = os.path.getsize(ota_path)
         logging.info("fsize={0}".format(fsize))
-        file = open(ota_path,'rb')
+        file = open(ota_path, 'rb')
         file.seek(0)
         pbar = ProgressBar().start()
-        i=0
+        i = 0
         starttime = time.time()
-        for i in range(0,math.ceil(fsize/self.lenght)):      
-            c= file.read(self.lenght)
+        for i in range(0, math.ceil(fsize / self.lenght)):
+            c = file.read(self.lenght)
             ssss = str(binascii.b2a_hex(c))[2:-1]
             self.client.sendall(bytes().fromhex(ssss))
-            pbar.update(int(100*i*self.lenght/fsize))
-            i=i+1
-        file.close()  
+            pbar.update(int(100 * i * self.lenght / fsize))
+            i = i + 1
+        file.close()
         endtime = time.time()
         self.client.sendall(b'1')
-        pbar.finish()  
-        logging.info('OTA used time :{0}secs'.format(round(endtime - starttime, 2)))   
+        pbar.finish()
+        logging.info('OTA used time :{0}secs'.format(
+            round(endtime - starttime, 2)))
         time.sleep(2)
         self.Wait_write("OTA over.")
-        
+
     def handle(self):
         pass
