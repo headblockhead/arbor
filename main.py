@@ -117,7 +117,7 @@ class TimetableServer(tcp_sver.tcp_sver):
             for lesson in splitCalendarData:
                 draw.text((0, drawEventsYLocation),
                           lesson, font=fontEvents, fill=0)
-                drawEventsYLocation += 20
+                drawEventsYLocation += 18
 
             # Draw the profile picture on the screen.
             profileImage = get_profile_img(headers, arborURL)
