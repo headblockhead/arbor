@@ -148,7 +148,6 @@ def get_headers(login_reciv):
 
 
 def login(url, user, password):
-    raw_data_login = '{"items":[{"username":"' + \
-        user + '","password":"' + password + '"}]}'
+    raw_data_login = '{"items":[{"username":"' + user + '","password":"' + password + '"}]}'
     login_reciv = requests.post(url, data=raw_data_login)
     return login_reciv
