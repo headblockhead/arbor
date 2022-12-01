@@ -10,6 +10,8 @@ github.com/golang/freetype v0.0.0-20170609003504-e2365dfdc4a0 h1:DACJavvAHhabrF0
 github.com/golang/freetype v0.0.0-20170609003504-e2365dfdc4a0/go.mod h1:E/TSTwGwJL78qG/PmXZO1EjYhfJinVAhrmmHX6Z8B9k=
 github.com/headblockhead/waveshareCloud v0.0.0-20221126121805-44fbaa0943e2 h1:FveGusXE1rdtSd6xgA8Dn09rHFdQZKYgZSx+Nnl6fGc=
 github.com/headblockhead/waveshareCloud v0.0.0-20221126121805-44fbaa0943e2/go.mod h1:oQfKZ7tviepz0HcfVX6ff87tUFb7tZ5tekmRZrMXJN0=
+github.com/oliamb/cutter v0.2.2 h1:Lfwkya0HHNU1YLnGv2hTkzHfasrSMkgv4Dn+5rmlk3k=
+github.com/oliamb/cutter v0.2.2/go.mod h1:4BenG2/4GuRBDbVm/OPahDVqbrOemzpPiG5mi1iryBU=
 github.com/ysmood/goob v0.4.0 h1:HsxXhyLBeGzWXnqVKtmT9qM7EuVs/XOgkX7T6r1o1AQ=
 github.com/ysmood/goob v0.4.0/go.mod h1:u6yx7ZhS4Exf2MwciFr6nIM8knHQIE22lFpWHnfql18=
 github.com/ysmood/got v0.32.0 h1:aAHdQgfgMb/lo4v+OekM+SSqEJYFI035h5YYvLXsVyU=

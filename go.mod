@@ -7,6 +7,7 @@ require github.com/headblockhead/waveshareCloud v0.0.0-20221126121805-44fbaa0943
 require (
 	github.com/go-rod/rod v0.112.2
 	github.com/golang/freetype v0.0.0-20170609003504-e2365dfdc4a0
+	github.com/oliamb/cutter v0.2.2
 )
 
 require (
