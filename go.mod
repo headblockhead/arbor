@@ -17,7 +17,7 @@ require (
 )
 
 require (
-	github.com/MaxHalford/halfgone v0.0.0-20171017091812-482157b86ccb // indirect
+	github.com/MaxHalford/halfgone v0.0.0-20171017091812-482157b86ccb
 	github.com/disintegration/imaging v1.6.2 // indirect
 	github.com/fogleman/gg v1.3.0
 	golang.org/x/image v0.1.0

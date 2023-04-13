@@ -6,10 +6,11 @@ import (
 	"image"
 	"image/jpeg"
 	"net/http"
-	"os"
 	"regexp"
+	"strconv"
 	"time"
 
+	"github.com/MaxHalford/halfgone"
 	"github.com/fogleman/gg"
 	"github.com/go-rod/rod"
 	"github.com/go-rod/rod/lib/launcher"
@@ -27,6 +28,7 @@ type Data struct {
 	Points       string
 	Attendance   string
 	Week         string
+	TimeTable    []string
 }
 
 type Creds struct {
@@ -84,11 +86,12 @@ func GetArborData(c *Creds) (data Data, err error) {
 
 	// Get the profile image
 	fmt.Println("Getting profile image...")
-	imgStr := page.MustElement(".mis-info-panel-picture-inner").MustEval(`() => this.style.backgroundImage`).String()
+	imgStr := page.MustElement(".info-panel-picture-inner").MustEval(`() => this.src`).String()
 	fmt.Println("Profile image src got:", imgStr)
 	fmt.Println("Filtering image src...")
 	r1 := regexp.MustCompile("^url[\\(]\"|\\)$|width\\/.*$") // This is a regex to remove the url() and width part of the string
 	imgStr = r1.ReplaceAllString(imgStr, "")
+	imgStr += "width/200"
 	fmt.Println("Image src filtered:", imgStr)
 	fmt.Println("Downloading image...")
 	resp, err := http.Get(imgStr)
@@ -144,6 +147,44 @@ func GetArborData(c *Creds) (data Data, err error) {
 	fmt.Println("Waiting for timetable to load...")
 	page.MustWaitElementsMoreThan("td", 5)
 	fmt.Println("Timetable loaded!")
+
+	fmt.Println("Finding Day button...")
+	daybutton := page.MustElement(".x-segmented-button-first")
+	fmt.Println("Clicking Day button...")
+	daybutton.MustClick()
+	fmt.Println("Clicked Day button!")
+
+	// DEBUG: skip forward a few days
+	//next := page.MustElement(".mis-calendar-navigation-button-next")
+	//for i := 0; i < 6; i++ {
+	//	next.MustClick()
+	//	time.Sleep(time.Second)
+	//}
+
+	calendarContainer := page.MustElement(".mis-cal-day")
+	calendar := calendarContainer.MustElement("tbody")
+	calLists := calendar.MustElement("tr")
+	calLists.MustElement("td").MustRemove()
+	calElements := calLists.MustElement("td")
+	// calElements is a list of divs that contain the date,time and name of events.
+
+	// Loop through the elements and get the text
+	fmt.Println("Getting timetable...")
+	timetable := []string{}
+	for _, element := range calElements.MustElements(".mis-cal-event") {
+		fmt.Println("Found element:", element)
+		// Revove newlines and replace with " - "
+		r := regexp.MustCompile("[\\r\\n]+")
+		// Remove "Location: "
+		r2 := regexp.MustCompile("Location: ")
+		// Replace " - " with "-"
+		r3 := regexp.MustCompile(" - ")
+		// Replace " | " with "|"
+		r4 := regexp.MustCompile(" \\| ")
+		timetable = append(timetable, r2.ReplaceAllString(r.ReplaceAllString(r4.ReplaceAllString(r3.ReplaceAllString(element.MustText(), "-"), "|"), "|"), ""))
+	}
+	fmt.Println("Timetable got:", timetable)
+	d.TimeTable = timetable
 	return d, nil
 }
 
@@ -167,44 +208,49 @@ func GetArborImage(d *Data) (outimg image.Image, err error) {
 	if err != nil {
 		return nil, err
 	}
-	// eventsFace, err := loadFontFaceReader(fontfile, 12)
-	// if err != nil {
-	// 	return nil, err
-	// }
-	dc.SetFontFace(titleFace)
+	timetableFace, err := loadFontFaceReader(fontfile, 15)
+
 	// Draw the word "timetable" at the top left of the image
+	dc.SetFontFace(titleFace)
 	dc.DrawStringAnchored("Timetable", 0, 0, 0, 0.8)
+
 	dc.SetFontFace(subtitleFace)
 	dc.DrawStringAnchored("Owner: "+d.Name, 0, 55, 0, 0)
 	dc.DrawStringAnchored("Attendance: "+d.Attendance, 0, 75, 0, 0)
 	dc.DrawStringAnchored("Points: "+d.Points, 0, 95, 0, 0)
 	dc.DrawStringAnchored("Date: "+time.Now().Format("Monday")+" - Week "+d.Week, 0, 115, 0, 0)
 	dc.DrawStringAnchored("      "+time.Now().Format("02/01/2006"), 0, 135, 0, 0)
-	// Draw the profile image in the top right
-	// img = img.convert("1").crop((30, 30, 160, 190))
+
+	dc.SetFontFace(subtitleFace)
+	dc.DrawStringAnchored("Events:", 0, 165, 0, 0)
+
+	dc.SetFontFace(timetableFace)
+	if len(d.TimeTable) == 0 {
+		dc.DrawStringAnchored("No events today!", 0, 180, 0, 0)
+	} else {
+		for i, event := range d.TimeTable {
+			dc.DrawStringAnchored(strconv.Itoa(i+1)+"|"+event, 0, float64(180+(12*i)), 0, 0)
+		}
+	}
+
+	// Replace fuzzy text with crisp text
+	greyText := halfgone.ImageToGray(dc.Image())
+	greyText = halfgone.ThresholdDitherer{Threshold: 100}.Apply(greyText)
+	dc.Clear()
+	dc.DrawImage(greyText, 0, 0)
+
+	// Crop the profile image
 	croppedImg, err := cutter.Crop(d.ProfileImage, cutter.Config{
-		Width:  130,
-		Height: 160,
-		Anchor: image.Point{30, 30},
+		Width:  150,
+		Height: 141,
+		Anchor: image.Point{101, 100},
 		Mode:   cutter.Centered,
 	})
-	// Save the image to a file
-	file, err := os.Create("out.jpg")
-	if err != nil {
-		return nil, err
-	}
-	defer file.Close()
-	err = jpeg.Encode(file, croppedImg, &jpeg.Options{Quality: 100})
-	if err != nil {
-		return nil, err
-	}
 	// Draw the image
-	dc.DrawImage(croppedImg, 270, 0)
-
+	dc.DrawImage(croppedImg, 225, -30)
 	if err != nil {
 		return nil, err
 	}
-	dc.DrawImage(croppedImg, 270, 0)
 	dc.Clip()
 	return dc.Image(), nil
 }
