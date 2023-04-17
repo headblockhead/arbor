@@ -185,6 +185,22 @@ func GetArborData(c *Creds) (data Data, err error) {
 	}
 	fmt.Println("Timetable got:", timetable)
 	d.TimeTable = timetable
+
+	// Get which week it is
+	fmt.Println("Getting week...")
+	week := page.MustElement(".mis-calendar-title")
+	fmt.Println("Found week element:", week)
+	// Format: Monday 17 April 2023 (Week A)
+	// Wanted: A
+	weekStr := week.MustText()
+	fmt.Println("Week got:", weekStr)
+	fmt.Println("Filtering week...")
+	r := regexp.MustCompile("Week [A-Z]")
+	weekStr = r.FindString(weekStr)
+	r2 := regexp.MustCompile("Week ")
+	weekStr = r2.ReplaceAllString(weekStr, "")
+	fmt.Println("Week filtered:", weekStr)
+	d.Week = weekStr
 	return d, nil
 }
 
