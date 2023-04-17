@@ -158,7 +158,7 @@ func GetArborData(c *Creds) (data Data, err error) {
 	//next := page.MustElement(".mis-calendar-navigation-button-next")
 	//for i := 0; i < 6; i++ {
 	//	next.MustClick()
-	//	time.Sleep(time.Second)
+	time.Sleep(time.Second)
 	//}
 
 	calendarContainer := page.MustElement(".mis-cal-day")
