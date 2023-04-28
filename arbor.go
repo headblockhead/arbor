@@ -67,11 +67,14 @@ func GetArborData(c *Creds) (data Data, err error) {
 
 	fmt.Println("Opening page...")
 	page := browser.MustPage(c.URL)
-	fmt.Println("Page opened!")
-
+	fmt.Println("Page URL set. Waiting for page to load...")
 	page.MustWaitLoad()
-	page.WaitElementsMoreThan("input", 1)
-
+	fmt.Println("Page loaded! 1/3")
+	page.MustWaitElementsMoreThan(".login-input-field", 0)
+	fmt.Println("Page loaded! 2/3")
+	page.MustWaitElementsMoreThan(".login-school-logo", 0)
+	fmt.Println("Page loaded! 3/3")
+	fmt.Println("Page opened!")
 	// Login
 	fmt.Println("Logging in...")
 	fmt.Println("Entering username...")
