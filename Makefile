@@ -1,4 +1,2 @@
-build:
-	docker build -t headblockhead/arbor/display:0.1 .
-display: build
-	docker run -p 6868:6868 -it headblockhead/arbor/display:0.1
+deploy:
+	cd server; GOOS=linux GOARCH=arm64 go build main.go; scp ./main ubuntu@54.164.224.210:main;
