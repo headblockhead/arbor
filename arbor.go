@@ -70,6 +70,7 @@ func GetArborData(c *Creds) (data Data, err error) {
 	fmt.Println("Page opened!")
 
 	page.MustWaitLoad()
+	page.WaitElementsMoreThan("input", 1)
 
 	// Login
 	fmt.Println("Logging in...")
