@@ -59,7 +59,7 @@ func GetArborData(c *Creds) (data Data, err error) {
 	fmt.Println("Browser found:", path)
 
 	fmt.Println("Launching browser...")
-	u := launcher.New().Bin(path).Set("no-sandbox").MustLaunch()
+	u := launcher.New().Bin(path).MustLaunch()
 	fmt.Println("Browser launched!")
 	fmt.Println("Connecting to browser...")
 	browser := rod.New().ControlURL(u).MustConnect()
