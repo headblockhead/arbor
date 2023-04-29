@@ -195,6 +195,7 @@ func GetArborData(c *Creds, browser *rod.Browser) (data Data, err error) {
 	weekStr = r2.ReplaceAllString(weekStr, "")
 	fmt.Println("Week filtered:", weekStr)
 	d.Week = weekStr
+	browser.MustClose()
 	return d, nil
 }
 
