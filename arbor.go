@@ -51,15 +51,12 @@ func loadFontFaceReader(fontBytes []byte, points float64) (font.Face, error) {
 	return face, nil
 }
 
-func GetArborData(c *Creds) (data Data, err error) {
+func GetArborData(c *Creds, l *launcher.Launcher) (data Data, err error) {
 	var d Data
 
-	fmt.Println("Finding browser...")
-	path, _ := launcher.LookPath()
-	fmt.Println("Browser found:", path)
-
 	fmt.Println("Launching browser...")
-	u := launcher.New().Bin(path).Set("no-sandbox").MustLaunch()
+	u := l.MustLaunch()
+
 	fmt.Println("Browser launched!")
 	fmt.Println("Connecting to browser...")
 	browser := rod.New().ControlURL(u).MustConnect()
@@ -70,8 +67,6 @@ func GetArborData(c *Creds) (data Data, err error) {
 	fmt.Println("Page URL set. Waiting for page to load...")
 	page.MustWaitLoad()
 	fmt.Println("Page loaded! 1/3")
-	fmt.Println("AAAA: ", page.MustElement("#username").MustText())
-	fmt.Println("a")
 	page.MustWaitElementsMoreThan(".login-input-field", 0)
 	fmt.Println("Page loaded! 2/3")
 	page.MustWaitElementsMoreThan(".login-school-logo", 0)
