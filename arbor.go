@@ -50,7 +50,7 @@ func loadFontFaceReader(fontBytes []byte, points float64) (font.Face, error) {
 	return face, nil
 }
 
-func GetArborData(c *Creds, browser *rod.Browser) (data Data, err error) {
+func GetArborData(c *Creds, browser *rod.Browser, downloadImages bool) (data Data, err error) {
 	var d Data
 
 	fmt.Println("Opening page...")
@@ -79,35 +79,36 @@ func GetArborData(c *Creds, browser *rod.Browser) (data Data, err error) {
 	fmt.Println("Name got:", d.Name)
 
 	// Get the profile image
-	fmt.Println("Getting profile image...")
-	imgStr := page.MustElement(".info-panel-picture-inner").MustEval(`() => this.src`).String()
-	fmt.Println("Profile image src got:", imgStr)
-	fmt.Println("Filtering image src...")
-	r1 := regexp.MustCompile("^url[\\(]\"|\\)$|width\\/.*$") // This is a regex to remove the url() and width part of the string
-	imgStr = r1.ReplaceAllString(imgStr, "")
-	imgStr += "width/200"
-	fmt.Println("Image src filtered:", imgStr)
-	fmt.Println("Downloading image...")
-	resp, err := http.Get(imgStr)
-	if err != nil {
-		return Data{}, err
+	if downloadImages {
+		fmt.Println("Getting profile image...")
+		imgStr := page.MustElement(".info-panel-picture-inner").MustEval(`() => this.src`).String()
+		fmt.Println("Profile image src got:", imgStr)
+		fmt.Println("Filtering image src...")
+		r1 := regexp.MustCompile("^url[\\(]\"|\\)$|width\\/.*$") // This is a regex to remove the url() and width part of the string
+		imgStr = r1.ReplaceAllString(imgStr, "")
+		imgStr += "width/200"
+		fmt.Println("Image src filtered:", imgStr)
+		fmt.Println("Downloading image...")
+		resp, err := http.Get(imgStr)
+		if err != nil {
+			return Data{}, err
+		}
+		defer resp.Body.Close()
+		fmt.Println("Image downloaded!")
+		imgBytes := []byte{}
+		_, err = resp.Body.Read(imgBytes)
+		if err != nil {
+			return Data{}, err
+		}
+		fmt.Println("Decoding image...")
+		img, err := jpeg.Decode(resp.Body)
+		if err != nil {
+			return Data{}, err
+		}
+		fmt.Println("Image decoded!")
+		d.ProfileImage = img
+		fmt.Println("Profile Image URL:", imgStr)
 	}
-	defer resp.Body.Close()
-	fmt.Println("Image downloaded!")
-	imgBytes := []byte{}
-	_, err = resp.Body.Read(imgBytes)
-	if err != nil {
-		return Data{}, err
-	}
-	fmt.Println("Decoding image...")
-	img, err := jpeg.Decode(resp.Body)
-	if err != nil {
-		return Data{}, err
-	}
-	fmt.Println("Image decoded!")
-	d.ProfileImage = img
-	fmt.Println("Profile Image URL:", imgStr)
-
 	// Get the attendance
 	fmt.Println("Getting attendance...")
 	attendance := page.MustElement(".mis-htmlpanel-measure-value")
