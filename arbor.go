@@ -13,7 +13,6 @@ import (
 	"github.com/MaxHalford/halfgone"
 	"github.com/fogleman/gg"
 	"github.com/go-rod/rod"
-	"github.com/go-rod/rod/lib/launcher"
 	"github.com/golang/freetype/truetype"
 	"github.com/oliamb/cutter"
 	"golang.org/x/image/font"
@@ -51,16 +50,8 @@ func loadFontFaceReader(fontBytes []byte, points float64) (font.Face, error) {
 	return face, nil
 }
 
-func GetArborData(c *Creds, l *launcher.Launcher) (data Data, err error) {
+func GetArborData(c *Creds, browser *rod.Browser) (data Data, err error) {
 	var d Data
-
-	fmt.Println("Launching browser...")
-	u := l.MustLaunch()
-
-	fmt.Println("Browser launched!")
-	fmt.Println("Connecting to browser...")
-	browser := rod.New().ControlURL(u).MustConnect()
-	defer browser.MustClose()
 
 	fmt.Println("Opening page...")
 	page := browser.MustPage(c.URL)
