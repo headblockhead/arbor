@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/go-rod/rod"
+	"github.com/go-rod/rod/lib/launcher"
 	"github.com/headblockhead/arbor"
 )
 
@@ -20,7 +22,12 @@ func main() {
 	if err != nil {
 		fmt.Printf("error parsing creds json: %v", err)
 	}
-	_, err = arbor.GetArborData(&c)
+	fmt.Println("Finding browser...")
+	path, _ := launcher.LookPath()
+	fmt.Println("Browser found:", path)
+	u := launcher.New().Bin(path).Set("no-sandbox").MustLaunch()
+	b := rod.New().ControlURL(u).MustConnect()
+	_, err = arbor.GetArborData(&c, b, true)
 	if err != nil {
 		fmt.Println("error:", err)
 	}

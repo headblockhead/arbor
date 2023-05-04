@@ -7,6 +7,8 @@ import (
 	"net"
 	"os"
 
+	"github.com/go-rod/rod"
+	"github.com/go-rod/rod/lib/launcher"
 	"github.com/headblockhead/arbor"
 	"github.com/headblockhead/waveshareCloud"
 )
@@ -66,8 +68,13 @@ func handleRequest(conn net.Conn, c *arbor.Creds) {
 		fmt.Printf("Device ID Incorrect, stopping connection")
 	}
 
-	// Drawing the testpattern image to the display.
-	data, err := arbor.GetArborData(c)
+	fmt.Println("Finding browser...")
+	path, _ := launcher.LookPath()
+	fmt.Println("Browser found:", path)
+	u := launcher.New().Bin(path).Set("no-sandbox").MustLaunch()
+	b := rod.New().ControlURL(u).MustConnect()
+
+	data, err := arbor.GetArborData(c, b, true)
 	img, err := arbor.GetArborImage(&data)
 	if err != nil {
 		fmt.Printf("Error getting arbor image: %v", err)

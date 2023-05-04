@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"regexp"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/MaxHalford/halfgone"
@@ -21,13 +22,20 @@ import (
 //go:embed fonts
 var fonts embed.FS
 
+type TimetableElement struct {
+	StartTime string
+	EndTime   string
+	Location  string
+	Event     string
+}
+
 type Data struct {
 	Name         string
 	ProfileImage image.Image
 	Points       string
 	Attendance   string
 	Week         string
-	TimeTable    []string
+	TimeTable    []TimetableElement
 }
 
 type Creds struct {
@@ -165,9 +173,13 @@ func GetArborData(c *Creds, browser *rod.Browser, downloadImages bool) (data Dat
 
 	// Loop through the elements and get the text
 	fmt.Println("Getting timetable...")
-	timetable := []string{}
+	timetable := []TimetableElement{}
 	for _, element := range calElements.MustElements(".mis-cal-event") {
 		fmt.Println("Found element:", element)
+
+		// Create a new timetable element
+		t := TimetableElement{}
+
 		// Revove newlines and replace with " - "
 		r := regexp.MustCompile("[\\r\\n]+")
 		// Remove "Location: "
@@ -176,7 +188,24 @@ func GetArborData(c *Creds, browser *rod.Browser, downloadImages bool) (data Dat
 		r3 := regexp.MustCompile(" - ")
 		// Replace " | " with "|"
 		r4 := regexp.MustCompile(" \\| ")
-		timetable = append(timetable, r2.ReplaceAllString(r.ReplaceAllString(r4.ReplaceAllString(r3.ReplaceAllString(element.MustText(), "-"), "|"), "|"), ""))
+		timetableString := r2.ReplaceAllString(r.ReplaceAllString(r4.ReplaceAllString(r3.ReplaceAllString(element.MustText(), "-"), "|"), "|"), "")
+		fmt.Println("Timetable string:", timetableString)
+		timetableStartEnd := strings.Split(timetableString, "|")[0]
+		fmt.Println("Timetable start/end:", timetableStartEnd)
+		timetableStartEndSplit := strings.Split(timetableStartEnd, "-")
+		fmt.Println("Timetable start/end split:", timetableStartEndSplit)
+		t.StartTime = timetableStartEndSplit[0]
+		t.EndTime = timetableStartEndSplit[1]
+
+		timetableLocation := strings.Split(timetableString, "|")[1]
+		fmt.Println("Timetable location:", timetableLocation)
+		t.Location = timetableLocation
+
+		timetableEvent := strings.Split(timetableString, "|")[2]
+		fmt.Println("Timetable event:", timetableEvent)
+		t.Event = timetableEvent
+
+		timetable = append(timetable, t)
 	}
 	fmt.Println("Timetable got:", timetable)
 	d.TimeTable = timetable
@@ -241,7 +270,7 @@ func GetArborImage(d *Data) (outimg image.Image, err error) {
 		dc.DrawStringAnchored("No events today!", 0, 180, 0, 0)
 	} else {
 		for i, event := range d.TimeTable {
-			dc.DrawStringAnchored(strconv.Itoa(i+1)+"|"+event, 0, float64(180+(12*i)), 0, 0)
+			dc.DrawStringAnchored(strconv.Itoa(i+1)+"|"+event.StartTime+"-"+event.EndTime+"|"+event.Location+"|"+event.Event, 0, float64(180+(12*i)), 0, 0)
 		}
 	}
 
