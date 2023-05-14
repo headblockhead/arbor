@@ -158,11 +158,11 @@ func GetArborData(c *Creds, browser *rod.Browser, downloadImages bool) (data Dat
 	fmt.Println("Clicked Day button!")
 
 	// DEBUG: skip forward a few days
-	next := page.MustElement(".mis-calendar-navigation-button-next")
-	for i := 0; i < 4; i++ {
-		next.MustClick()
-		time.Sleep(time.Second)
-	}
+	//next := page.MustElement(".mis-calendar-navigation-button-next")
+	//for i := 0; i < 6; i++ {
+	//	next.MustClick()
+	time.Sleep(time.Second)
+	//}
 
 	calendarContainer := page.MustElement(".mis-cal-day")
 	calendar := calendarContainer.MustElement("tbody")
